@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "NoteIt",
+    "slug": "noteit",
+    "scheme": "noteit",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.dhruvsharma.noteit"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.dhruvsharma.noteit",
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "title": "NoteIt",
+      "output": "static"
+    },
+    "owner": "dhruv2mars",
+    "extra": {
+      "eas": {
+        "projectId": "332f5ada-3e10-4550-b5ce-87b5f27c1472"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/332f5ada-3e10-4550-b5ce-87b5f27c1472"
+    }
+  }
+}

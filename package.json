@@ -1,0 +1,21 @@
+{
+  "name": "noteit-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/noteit-expo",
+    "apps/noteit-electron"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "devDependencies": {
+    "turbo": "^2.0.9",
+    "prettier": "^3.3.3"
+  },
+  "packageManager": "bun@1.1.21"
+}
