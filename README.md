@@ -6,9 +6,9 @@ Thank you for contributing to NoteIt! This guide provides instructions on how to
 
 1.  **Git**: Ensure Git is installed on your system.
 2.  **Node.js**: Install Node.js (version 20.x or later recommended). You can download it from [nodejs.org](https://nodejs.org/).
-3.  **Bun**: This project uses Bun as the JavaScript runtime and package manager. Install Bun by following the instructions at [bun.sh](https://bun.sh/).
+3.  **Bun**: This project uses Bun as the JavaScript runtime and package manager. **Bun is required** to ensure consistent dependency management and to run the project's scripts. Install Bun by following the instructions at [bun.sh](https://bun.sh/).
 4.  **Platform-Specific Build Tools**:
-    *   **Windows**: No special tools are generally needed for NSIS builds if Node.js is set up correctly.
+    *   **Windows**: No special tools are generally needed for NSIS builds if Node.js is set up correctly. However, if you encounter errors related to compiling native modules during dependency installation or the build, you might need to install Visual Studio Build Tools (available from the Visual Studio website, ensure C++ build tools are selected during installation).
     *   **macOS**: Xcode Command Line Tools are required. If you don't have them, run `xcode-select --install` in your terminal.
     *   **Linux**: Depending on your distribution and the target format (e.g., AppImage, deb, rpm), you might need certain libraries like `fakeroot`, `dpkg`, `rpmbuild`. `electron-builder` usually provides good guidance if dependencies are missing during the build.
 
@@ -25,7 +25,7 @@ Thank you for contributing to NoteIt! This guide provides instructions on how to
     ```bash
     bun install
     ```
-    This will install dependencies for the entire monorepo, including the Electron app.
+    This will install dependencies for the entire monorepo, including the Electron app, using the `bun.lockb` lockfile for consistency.
 
 ## Building the Application
 
