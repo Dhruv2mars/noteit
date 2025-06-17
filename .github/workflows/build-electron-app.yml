@@ -43,6 +43,10 @@ jobs:
         run: bun run build:vite
         working-directory: ./apps/noteit-electron
 
+      - name: Install Electron Builder App Dependencies
+        run: npx electron-builder install-app-deps
+        working-directory: ./apps/noteit-electron
+
       - name: Build Electron App
         run: ${{ matrix.build_command }}
         working-directory: ./apps/noteit-electron
