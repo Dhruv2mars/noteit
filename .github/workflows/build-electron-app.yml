@@ -10,18 +10,19 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     strategy:
+      fail-fast: false # Allow all jobs to run even if one fails
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
         include:
           - os: windows-latest
             artifact_name: windows-installer
-            build_command: 'bun run build -- --win nsis'
+            build_command: 'npx electron-builder --win nsis'
           - os: macos-latest
             artifact_name: macos-installer
-            build_command: 'bun run build -- --mac'
+            build_command: 'npx electron-builder --mac'
           - os: ubuntu-latest
             artifact_name: linux-installer
-            build_command: 'bun run build -- --linux'
+            build_command: 'npx electron-builder --linux'
 
     steps:
       - name: Check out Git repository
@@ -30,18 +31,23 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '16' # Note: Ensure this matches your project's required Node.js version
+          node-version: '20' # Using a more recent LTS version
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v1
 
       - name: Install Dependencies
-        run: bun install
+        run: bun install --frozen-lockfile # Install from the monorepo root
+
+      - name: Build Vite Assets
+        run: bun run build:vite
         working-directory: ./apps/noteit-electron
 
       - name: Build Electron App
         run: ${{ matrix.build_command }}
         working-directory: ./apps/noteit-electron
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Recommended for electron-builder
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
