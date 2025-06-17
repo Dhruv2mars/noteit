@@ -1,0 +1,50 @@
+name: Build Electron App for All Platforms
+
+on:
+  push:
+    branches:
+      - main # Important: Change this to your default branch if it's not 'main'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+        include:
+          - os: windows-latest
+            artifact_name: windows-installer
+            build_command: 'bun run build -- --win nsis'
+          - os: macos-latest
+            artifact_name: macos-installer
+            build_command: 'bun run build -- --mac'
+          - os: ubuntu-latest
+            artifact_name: linux-installer
+            build_command: 'bun run build -- --linux'
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '16' # Note: Ensure this matches your project's required Node.js version
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Install Dependencies
+        run: bun install
+        working-directory: ./apps/noteit-electron
+
+      - name: Build Electron App
+        run: ${{ matrix.build_command }}
+        working-directory: ./apps/noteit-electron
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: apps/noteit-electron/out/dist/*

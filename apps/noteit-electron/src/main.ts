@@ -1,77 +1,123 @@
-import { app, BrowserWindow, session } from 'electron'; // Added session
+import { app, BrowserWindow, session } from 'electron';
+import { autoUpdater } from 'electron-updater';
 import path from 'node:path';
-import started from 'electron-squirrel-startup';
+import log from 'electron-log/main';
 
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (started) {
+// Configure logging
+log.initialize();
+log.info('App starting...');
+
+let mainWindow: BrowserWindow | null;
+
+// --- Single Instance Lock ---
+// This prevents multiple instances of the app from running.
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+  log.warn('Another instance is already running. Quitting this instance.');
   app.quit();
-}
-
-const createWindow = () => {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    title: 'NoteIt', // Set the window title
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true, // Enable contextIsolation
-      // sandbox: true, // Consider for even tighter security, but might require more preload setup
-    },
+} else {
+  app.on('second-instance', (event, commandLine, workingDirectory) => {
+    log.info('Second instance detected. Focusing main window.');
+    // Someone tried to run a second instance; we should focus our window.
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
   });
 
-  // In development, load the Expo dev server. In production, load the deployed web app.
-  if (app.isPackaged) {
-    // Production: load the live web app URL
-    mainWindow.loadURL('https://noteit.expo.app');
-  } else {
-    // Development: load the local Expo dev server
-    mainWindow.loadURL('http://localhost:8081');
-    // Open the DevTools automatically in development
-    mainWindow.webContents.openDevTools();
-  }
-};
-
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.on('ready', () => {
-  // In development, modify the CSP to allow loading from the Expo dev server.
-  // This must be done before the window is created.
-  if (!app.isPackaged) {
-    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-      callback({
-        responseHeaders: {
-          ...details.responseHeaders,
-          // This is a permissive CSP for development to allow HMR and other features from Expo.
-          // For a production build loading local files, this should be much stricter.
-          'Content-Security-Policy': [
-            "default-src 'self' http://localhost:*; script-src 'self' http://localhost:* 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:* ws://localhost:*; img-src 'self' data:; font-src 'self' data:;"
-          ],
-        },
-      });
+  const createWindow = () => {
+    log.info('Creating main window...');
+    // Create the browser window.
+    mainWindow = new BrowserWindow({
+      width: 800,
+      height: 600,
+      title: 'NoteIt',
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.js'),
+        contextIsolation: true,
+      },
     });
-  }
 
-  createWindow();
-});
+    // Load the app content.
+    if (app.isPackaged) {
+      log.info('Loading production URL: https://noteit.expo.app');
+      mainWindow.loadURL('https://noteit.expo.app');
+    } else {
+      log.info('Loading development URL: http://localhost:8081');
+      mainWindow.loadURL('http://localhost:8081');
+      mainWindow.webContents.openDevTools();
+    }
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
+    mainWindow.on('closed', () => {
+      log.info('Main window closed event.');
+      mainWindow = null;
+    });
+  };
 
-app.on('activate', () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (BrowserWindow.getAllWindows().length === 0) {
+  // --- App Lifecycle Events ---
+
+  app.on('ready', () => {
+    log.info('App is ready.');
+    // In development, modify the CSP to allow loading from the Expo dev server.
+    if (!app.isPackaged) {
+      session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+        callback({
+          responseHeaders: {
+            ...details.responseHeaders,
+            'Content-Security-Policy': [
+              "default-src 'self' http://localhost:*; script-src 'self' http://localhost:* 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:* ws://localhost:*; img-src 'self' data:; font-src 'self' data:;"
+            ],
+          },
+        });
+      });
+    }
     createWindow();
-  }
-});
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.
+    // --- Auto-updater --- 
+    log.info('Setting up auto-updater.');
+    autoUpdater.logger = log;
+    autoUpdater.checkForUpdatesAndNotify();
+
+    autoUpdater.on('update-available', () => {
+      log.info('Update available.');
+    });
+
+    autoUpdater.on('update-downloaded', () => {
+      log.info('Update downloaded; will install now');
+      autoUpdater.quitAndInstall();
+    });
+
+    autoUpdater.on('error', (err) => {
+      log.error('Error in auto-updater. ' + err);
+    });
+  });
+
+  app.on('window-all-closed', () => {
+    log.info('Event: window-all-closed.');
+    if (process.platform !== 'darwin') {
+      log.info('Quitting app (not macOS).');
+      app.quit();
+    } else {
+      log.info('Not quitting app (macOS).');
+    }
+  });
+
+  app.on('activate', () => {
+    log.info('Event: activate.');
+    if (BrowserWindow.getAllWindows().length === 0) {
+      log.info('No windows open, creating a new one.');
+      createWindow();
+    }
+  });
+
+    app.on('before-quit', () => {
+    log.warn('Event: before-quit. App is preparing to quit.');
+    // This is a good place to handle any cleanup before the app exits.
+    // For example, you might want to save any unsaved data.
+  });
+
+  app.on('will-quit', (event) => {
+    log.warn('Event: will-quit. App will quit now.');
+  });
+}
