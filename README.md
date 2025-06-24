@@ -1,18 +1,24 @@
-# NoteIt - Contributor Build Instructions
+# NoteIt - Contributor Guide
 
-Thank you for contributing to NoteIt! This guide provides instructions on how to build the Electron application for your specific operating system. Once built, please share the installer with the project maintainer for inclusion in the official GitHub Release.
+Welcome to the NoteIt project! This guide provides everything you need to set up your development environment, run the apps locally, and build the final installers.
 
-## Prerequisites
+## 1. Getting Started: Initial Setup
+
+Follow these steps once to prepare your machine.
+
+### Prerequisites
 
 1.  **Git**: Ensure Git is installed on your system.
-2.  **Node.js**: Install Node.js (version 20.x or later recommended). You can download it from [nodejs.org](https://nodejs.org/).
-3.  **Bun**: This project uses Bun as the JavaScript runtime and package manager. **Bun is required** to ensure consistent dependency management and to run the project's scripts. Install Bun by following the instructions at [bun.sh](https://bun.sh/).
-4.  **Platform-Specific Build Tools**:
-    *   **Windows**: No special tools are generally needed for NSIS builds if Node.js is set up correctly. However, if you encounter errors related to compiling native modules during dependency installation or the build, you might need to install Visual Studio Build Tools (available from the Visual Studio website, ensure C++ build tools are selected during installation).
-    *   **macOS**: Xcode Command Line Tools are required. If you don't have them, run `xcode-select --install` in your terminal.
-    *   **Linux**: Depending on your distribution and the target format (e.g., AppImage, deb, rpm), you might need certain libraries like `fakeroot`, `dpkg`, `rpmbuild`. `electron-builder` usually provides good guidance if dependencies are missing during the build.
+2.  **Node.js**: `v20.10.0` or later is required.
+3.  **Bun**: `v1.1.21` or later is required (the project is locked to this version).
 
-## Setup Instructions
+    You can verify your installed versions by running:
+    ```sh
+    node -v
+    bun -v
+    ```
+
+### Installation
 
 1.  **Clone the Repository**:
     ```bash
@@ -20,51 +26,103 @@ Thank you for contributing to NoteIt! This guide provides instructions on how to
     cd noteit
     ```
 
-2.  **Install Dependencies**:
-    From the root of the `noteit` repository, run:
+2.  **Install All Dependencies**:
+    From the **root directory** of the project, run:
     ```bash
     bun install
     ```
-    This will install dependencies for the entire monorepo, including the Electron app, using the `bun.lockb` lockfile for consistency.
+    This command reads the `bun.lockb` file and installs all the necessary packages for the entire project (both the Expo and Electron apps).
 
-## Building the Application
+## 2. Local Development
 
-All build commands should be run from the `apps/noteit-electron` directory.
+This section explains how to run the apps on your local machine for development and testing.
 
-```bash
-cd apps/noteit-electron
-```
+### Running the Mobile App (Expo)
 
-### macOS Build
+If you are working on the mobile app or the web interface:
 
-```bash
-bun run build -- --mac
-```
-*   **Output**: The installer (e.g., `NoteIt-0.0.1.dmg` or `NoteIt-0.0.1-arm64.dmg`) will be in `apps/noteit-electron/out/dist/`.
-
-### Windows Build (NSIS Installer)
-
-```bash
-bun run build -- --win nsis
-```
-*   **Output**: The installer (e.g., `NoteIt Setup 0.0.1.exe`) will be in `apps/noteit-electron/out/dist/`.
-
-### Linux Build (AppImage recommended)
-
-```bash
-bun run build -- --linux appimage
-```
-*   You can also build for other Linux targets like `deb` or `rpm` if needed:
+1.  Navigate to the Expo app directory:
     ```bash
-    bun run build -- --linux deb
-    bun run build -- --linux rpm
+    cd apps/noteit-expo
     ```
-*   **Output**: The installer (e.g., `NoteIt-0.0.1.AppImage`) will be in `apps/noteit-electron/out/dist/`.
+2.  Start the development server:
+    > **Note:** The `bun install` command you ran earlier already installed the correct version of the Expo CLI for this project. A separate global install is not needed.
+    ```bash
+    bun run dev
+    ```
+3.  The terminal will show you options to open the app:
+    *   Press `w` to open it in your web browser.
+    *   Scan the QR code with the Expo Go app on your iOS or Android device.
 
-## Packaging and Sharing Artifacts
+### Running the Desktop App (Electron)
 
-1.  **Locate the Installer**: After a successful build, find the installer file in the `apps/noteit-electron/out/dist/` directory.
-2.  **Rename (if necessary)**: Ensure the file name clearly indicates the app name, version, and platform/architecture (e.g., `NoteIt-0.0.1-mac-arm64.dmg`, `NoteIt-0.0.1-windows-x64.exe`, `NoteIt-0.0.1-linux-x64.AppImage`). The default names from `electron-builder` are usually good.
-3.  **Share the Installer**: Please upload the installer file to a shared drive (e.g., Google Drive, Dropbox) or a file-sharing service and provide the download link to the project maintainer (@Dhruv2mars).
+Running the desktop app requires **two terminals** running at the same time, because the Electron shell loads its content from the Expo web development server.
+
+**Terminal 1: Start the Web Content Server**
+
+1.  Navigate to the Expo app directory:
+    ```bash
+    cd apps/noteit-expo
+    ```
+2.  Start the web development server specifically:
+    ```bash
+    bun run web
+    ```
+3.  Wait for the compilation to finish. You will see a message that the project is running on `http://localhost:8081`. **Leave this terminal running.**
+
+**Terminal 2: Start the Electron App**
+
+1.  Open a **new terminal window**.
+2.  Navigate to the Electron app directory:
+    ```bash
+    cd apps/noteit-electron
+    ```
+3.  Start the Electron development process:
+    ```bash
+    bun run dev
+    ```
+4.  After a moment, the NoteIt desktop application window will appear. It will load its content from `localhost:8081` (from Terminal 1), and you will see the actual app, not a blank template.
+
+## 3. Building the Desktop App Installers
+
+This section is for contributors who are helping create the final installable files for different operating systems.
+
+### Prerequisites for Building
+
+Ensure you have the necessary tools for your specific OS:
+
+*   **Windows**: If you encounter build errors, you may need to install the C++ build tools via the Visual Studio Installer.
+*   **macOS**: Xcode Command Line Tools are required. Run `xcode-select --install` if you don't have them.
+*   **Linux**: You may need packages like `fakeroot` or `dpkg` for certain build targets.
+
+### Build Commands
+
+All build commands must be run from the Electron app's directory (`apps/noteit-electron`).
+
+1.  **Navigate to the directory**:
+    ```bash
+    cd apps/noteit-electron
+    ```
+2.  **Run the build command for your platform**:
+
+    *   **For macOS**:
+        ```bash
+        bun run build -- --mac
+        ```
+
+    *   **For Windows (NSIS Installer)**:
+        ```bash
+        bun run build -- --win nsis
+        ```
+
+    *   **For Linux (AppImage recommended)**:
+        ```bash
+        bun run build -- --linux appimage
+        ```
+
+### Sharing the Installer
+
+1.  After a successful build, find the installer file in the `apps/noteit-electron/out/dist/` directory.
+2.  Please upload the installer to a file-sharing service (like Google Drive or Dropbox) and share the link with the project maintainer (@Dhruv2mars).
 
 Thank you for your contribution!
