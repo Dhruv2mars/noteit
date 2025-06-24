@@ -6,7 +6,7 @@
   "main": ".vite/build/main.js",
   "scripts": {
     "dev": "bun run build:vite && bun run start",
-    "build:vite": "vite build",
+    "build:vite": "vite build --config vite.main.config.ts && vite build --config vite.preload.config.ts",
     "preview": "vite preview",
     "start": "electron .vite/build/main.js",
     "build": "npm run build:vite && electron-builder",
